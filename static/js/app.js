@@ -50,13 +50,19 @@ function buildCharts(sample) {
     d3.json("samples.json").then((data) => {
         var samples = data.samples;
         
-        // Filter the samples array for the selected sample
+        // Filter samples array for the sample
         var resultArray = samples.filter(sampleObj => sampleObj.id == sample);
         
-        // Get sample values, OTU ids, and OTU labels for the bar chart
+        // sample values, OTU ids, and OTU labels for the bar chart
         var BarsampleValues = resultArray[0].sample_values.slice(0, 10).reverse();
         var BarsampleIds = resultArray[0].otu_ids.slice(0, 10).reverse();
         var BarsampleLabels = resultArray[0].otu_labels.slice(0, 10).reverse();
+
+         //sample values, OTU ids, and OTU labels for the bubble chart
+        var sampleValuesBubble = resultArray[0].sample_values;
+        var sampleIdsBubble = resultArray[0].otu_ids;
+        var sampleLabelsBubble = resultArray[0].otu_labels;
+    
         
         // Create trace for the bar chart
         var trace1 = {
@@ -66,33 +72,89 @@ function buildCharts(sample) {
             type: "bar",
             orientation: "h"
         };
+
+         // Create trace for the bubble chart
+        var trace2 = {
+             x: sampleIdsBubble,
+             y: sampleValuesBubble,
+             text: sampleLabelsBubble,
+             mode: 'markers',
+             marker: {
+                color: sampleIdsBubble,
+                size: sampleValuesBubble,
+                sizemode: 'diameter',
+                sizeref: 1,
+                colorscale: 'Orange'
+        }
+    };
+    
         
         // Create data array for the bar chart
         var data = [trace1];
+
+        // data array for the bubble chart
+        var bubbleData = [trace2];
+    
         
-        // Create layout for the bar chart
+        // layout for the bar chart
         var layout = {
             title: "Top 10 OTUs",
             xaxis: { title: "Sample Values" },
             yaxis: { title: "OTU IDs" }
         };
+
         
-        // Plot the bar chart
+         // layout for the bubble chart
+        var bubbleLayout = {
+            title: "OTU IDs vs. Sample Values",
+            showLegend:true,
+            xaxis: { title: "OTU IDs" },
+            yaxis: { title: "Sample Values" }
+    };
+        
+        // Plot the bar and buvble chart
         Plotly.newPlot("bar", data, layout);
+
+        Plotly.newPlot("bubble", bubbleData, bubbleLayout);
 
     });
 }
 
-// Fetch initial sample data from samples.json
+// This will retrieve initial sample data from samples.json
 var resultArray = samples.filter(sampleObj => sampleObj.id == sample);
 var metaResult = filteredMeta[0];
 var otuId = resultArray[0].otu_ids;
 var otuLabel = resultArray[0].otu_labels;
 var sampleValue = resultArray[0].sample_values;
 
-// Create trace for the bar chart
-var barData1 = [{
-    x: sampleValue.slice(0, 10).reverse(),
-    y: otuId.slice(0, 10).map((i) => `OTU ID ${i}`),
-    type: "bar",
-}];
+// Function to display sample biographical info
+function displayMetadata(metadata) {
+    // name and id the metadata bar
+    var metadataBar= d3.select("#sample-metadata");
+  
+    // Clearing previous data in demographic bar.
+    metadataBar.html("");
+  
+    // Loop 
+    Object.entries(metadata).forEach(([key, value]) => {
+      // Append a new paragraph element with the key-value pair to the metadata panel
+      metadataBar.append("p").text(`${key}: ${value}`);
+    });
+  }
+  // Update the buildMetadata function to call the displayMetadata function
+  function buildMetadata(sample) {
+    // Fetch sample metadata from samples.json
+    d3.json("samples.json").then((data) => {
+      var metadata = data.metadata;
+  
+      // Filter the metadata array for the selected sample
+      var resultArray = metadata.filter((metadataObj) => metadataObj.id == sample);
+  
+      // Get the metadata for the selected sample
+      var sampleMetadata = resultArray[0];
+  
+      // Call the displayMetadata function to display the metadata
+      displayMetadata(sampleMetadata);
+    });
+  }
+  
